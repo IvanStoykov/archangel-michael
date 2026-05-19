@@ -1,0 +1,80 @@
+# VideoBytes-only function-by-function marathon (7 packages ≈ 62 non-test Go files).
+# Run: ./scripts/run_videobytes_marathon.sh
+
+tasks:
+  - id: vb_audit_core
+    prompt_file: vb_audit_core.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 1
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"
+
+  - id: vb_audit_codecs
+    prompt_file: vb_audit_codecs.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 2
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"
+
+  - id: vb_audit_drivers
+    prompt_file: vb_audit_drivers.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 3
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"
+
+  - id: vb_audit_endpoints
+    prompt_file: vb_audit_endpoints.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 4
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"
+
+  - id: vb_audit_utils
+    prompt_file: vb_audit_utils.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 5
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"
+
+  - id: vb_audit_grpcapi
+    prompt_file: vb_audit_grpcapi.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 6
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"
+
+  - id: vb_audit_vms
+    prompt_file: vb_audit_vms.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 7
+    expected_sections:
+      - "function audit"
+      - "Executive Summary"
+      - "Critical"
+      - "Performance"
+      - "Concurrency"

@@ -1,0 +1,38 @@
+You are a senior Go backend engineer performing a deep-dive code audit of a manufacturing scheduling system called "factory-man". Read the code carefully with your file tools and think step-by-step. Do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/factory-man
+
+CONTEXT:
+factory-man is a production scheduling and shift management system for manufacturing floors. It runs a real-time drift detector that monitors whether machines are running the right product vs. what the published schedule says. It also has a greedy quota solver that assigns workers to machines to hit production targets.
+
+YOUR TASK:
+Audit the following four areas and produce a structured report.
+
+AREA 1 — DRIFT DETECTOR RACE & CORRECTNESS (internal/service/drift_detector.go)
+Read the entire file. Focus on:
+- The `evalSite` function acquires `debounceMu`, reads `driftSince` (a pointer to an inner map), unlocks the mutex, then iterates and mutates `driftSince` WITHOUT holding the lock, then re-acquires the lock at the end to write back. Is this safe? Under what conditions (e.g., two Ticker firings overlapping, or concurrent site goroutines) could this produce a data race or lost update?
+- The `d.store.(AlertWriter)` type assertion at line ~215 is done per machine per tick. If the store doesn't implement AlertWriter, drift alerts are silently skipped. Trace the impact: is there any observable signal to operators that alerts are being dropped?
+- `evalPrepOverdue` and `evalQuotaAtRisk` both call `ListAlerts` and iterate open alerts. If these three eval functions all run sequentially on the same site within one `tick()`, does their combined `ListAlerts` overhead matter at scale?
+
+AREA 2 — GREEDY QUOTA SOLVER CORRECTNESS (internal/service/scheduler.go)
+Read the `QuotaSolve` function. Focus on:
+- The greedy algorithm commits workers to machines in list order (line ~120). Workers are not sorted by any fitness criterion — it just takes the next unclaimed worker. Could this produce suboptimal assignments where a highly-trained worker ends up on a low-rate machine while an untrained worker sits idle?
+- The solver aggregates duplicate product quotas correctly (summing targets, taking earliest deadline). But what happens when a product has no rate entries in the matrix? The `cands` slice would be empty and the quota silently produces zero assignments. Is this surfaced in the response?
+- The `CapacityEstimate` function falls back to `bestRate = 1` (line ~190) when no rate exists for a product. This could return wildly inflated capacity numbers. Is this fallback documented or guarded?
+
+AREA 3 — STATE MACHINE ENFORCEMENT GAP (internal/domain/state_machine.go)
+The state machine defines valid worker/machine transitions. Audit:
+- Is `ValidateTransition` called at the store layer before writing state changes to the database, or only at the HTTP handler layer? If it's only checked at the handler, can internal service code bypass it?
+- The `WorkerStateAbsent` → `WorkerStateAvailable` and `WorkerStateAbsent` → `WorkerStateOffShift` are the only exits from Absent. Can a machine be assigned to a worker who is in WorkerStateAbsent? Check if assignment validation (internal/domain/invariants.go) guards against this.
+
+AREA 4 — SHIFT ASSIGNMENT CHAIN-SWAP REPAIR (internal/service/shift_assignment.go)
+Read the `GenerateAssignments` function and the chain-swap repair logic. Focus on:
+- The floater count formula (`loproHeadcount` thresholds 15 and 21) — is this hardcoded for a specific production floor configuration? If so, is it safe for sites with different group structures?
+- After the greedy initial assignment, if chain-swap repair is applied: does the repair loop have a bounded iteration count, or could it cycle indefinitely?
+
+DELIVERABLES:
+- **Area 1 — Drift Detector**: Race condition assessment (safe or unsafe, and why), silent alert drop risk.
+- **Area 2 — Quota Solver**: Specific scenarios where the greedy algorithm produces wrong or misleading output.
+- **Area 3 — State Machine**: Whether enforcement is at the boundary or leaky.
+- **Area 4 — Shift Assignment**: Hardcoded thresholds risk, repair loop safety.
+- **Priority Rankings**: Rank the four areas by severity. Which one would you fix first and why?

@@ -1,0 +1,12 @@
+PACKAGE AUDIT: VideoBytesGo / vms (function-by-function)
+
+SCOPE FILES (audit every function in each):
+- vms/vms.go
+- vms/recording.go
+- vms/responses.go
+
+FOCUS: Recording state machine, disk I/O errors, retention boundaries, response shaping, integration with drivers/codecs.
+
+DELIVERABLES: Function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes.
+
+Output title: `# VideoBytes vms — function audit`

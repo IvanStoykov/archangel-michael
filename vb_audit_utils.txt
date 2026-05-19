@@ -1,0 +1,18 @@
+PACKAGE AUDIT: VideoBytesGo / utils (function-by-function)
+
+SCOPE FILES (audit every function in each):
+- utils/AUFrame.go
+- utils/TimedRingBuffer.go
+- utils/media.go
+- utils/media_presets.go
+- utils/misc.go
+- utils/ptz.go
+- utils/web.go
+- utils/lpr_aggregator.go
+- utils/lpr_callback.go
+
+FOCUS: Ring buffer correctness under concurrent read/write, LPR aggregation races, media preset edge cases, time-based eviction, allocation in hot paths, nil/empty slice handling.
+
+DELIVERABLES: Function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes.
+
+Output title: `# VideoBytes utils — function audit`

@@ -1,0 +1,26 @@
+You are a senior video engineering AI assistant. Your task is to perform a deep-dive, offline analysis of a Go-based video streaming codebase ("VideoBytesGo"). Take your time and think step-by-step.
+
+CONTEXT:
+We have a test script that validates the video outputs of our API. When we request a progressive MP4 (by passing `mp4` to our endpoint, e.g., `/v2/streams/{id}/video/mp4`), the API returns a video file. However, when we run `ffprobe` on the returned `.mp4` file, it reports the container as "fragmented MP4" (specifically with brand tags like `mp42`, `mp41`, `isom`, `hlsf`) instead of a standard progressive MP4 with a single `moov` atom at the start.
+
+This indicates that our internal rebasing/remuxing logic that converts our internal buffer (which stores fMP4/RTSP frames) into a progressive MP4 is failing to properly structure the container, or it is accidentally falling back to passing through the fragmented MP4 data.
+
+YOUR TASK:
+Please thoroughly analyze the codebase to find why this conversion is failing or incomplete. Read the relevant Go source files with your tools and report findings grounded in the actual code.
+
+Specifically, please trace the following:
+
+1. THE INGESTION PATH: Look at how `codecs/fmp4_to_mp4.go`, `codecs/mp4.go`, and `codecs/fmp4_muxer.go` are utilized. We use native Go libraries for container manipulation.
+2. THE CONVERSION LOGIC: Find the function responsible for converting fMP4 to progressive MP4 (likely `ConvertFmp4ToProgressiveMp4` or similar).
+   - Is it correctly aggregating the `moof` and `mdat` fragments into a single `mdat` box?
+   - Is it properly generating and placing the `moov` box at the BEGINNING of the file (or using a faststart mechanism)?
+   - Are the `major_brand` and `compatible_brands` in the `ftyp` box hardcoded to fragmented brands (like `hlsf`, `dash`, `iso6`) instead of standard progressive brands (like `isom`, `mp42`)?
+3. THE FALLBACK LOGIC: Is the API endpoint (`endpoints.go` or `rtsp_client.go` `GetVideo`) ignoring errors during the conversion and silently returning the original fragmented buffer?
+4. TIMESTAMPS / REBASING: Check if the PTS/DTS timestamps are being correctly rewritten (rebased) to start at 0 when the new MP4 is generated. Bad timestamp rebasing often causes multiplexers to fail silently or produce invalid boxes.
+
+DELIVERABLES:
+Please output a detailed report structured as follows:
+- **Root Cause Hypothesis**: Why is `ffprobe` seeing an fMP4 instead of a progressive MP4?
+- **Code Trace**: A step-by-step trace of how the data flows from the buffer through the converter.
+- **Specific Box/Atom Analysis**: Details on how `ftyp`, `moov`, `moof`, and `mdat` are currently being written in the MP4 conversion logic.
+- **Proposed Fixes**: Concrete recommendations or pseudo-code to correct the Go implementation so it produces a valid progressive MP4.

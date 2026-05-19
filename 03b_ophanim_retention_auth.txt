@@ -1,0 +1,33 @@
+You are a senior Go backend security engineer. Perform a deep-dive static analysis of the "ophanim" surveillance system. Think step-by-step. Read source files with your tools; do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/ophanim
+
+YOUR TASK:
+Audit the following three areas.
+
+AREA 1 — RETENTION POLICY SAFETY (services/retention.go)
+Read the entire file. Focus on:
+- What is the deletion strategy — hard delete, soft delete (status flag), or archival to a separate table? If hard delete: can retention accidentally purge LPR hits that are referenced by an open "wanted plate" alert? Is there a foreign-key constraint or application-level check that guards against this?
+- Is the deletion query bounded per batch (e.g., DELETE ... LIMIT 1000) or does it delete all expired rows in a single transaction? An unbounded delete on a large hits table can take minutes and block concurrent ingest writes, causing a "retention storm."
+- Is there a minimum retention floor — e.g., "never delete a hit that arrived in the last N minutes" — to prevent a race where retention deletes a row that ingest just inserted within the same transaction window?
+- Does retention have a dry-run / audit mode, or is every run a live delete?
+
+AREA 2 — SHOTPOINT AUTH SECURITY (services/shotpoint_auth.go, services/shotpoint.go)
+Read both files. Focus on:
+- How is a Shotpoint token validated on inbound requests? Is there expiry checking, a signature/HMAC verification, or is any token that exists in the DB accepted regardless of age?
+- Is the token stored as plaintext or hashed (bcrypt/argon2/SHA-256)? If plaintext: an attacker with read-only DB access gets all tokens immediately. Assess the real-world blast radius.
+- In shotpoint.go, are there any outbound HTTP calls where the target URL is constructed from user-supplied or camera-supplied data without sanitization? This would be a Server-Side Request Forgery (SSRF) vulnerability — an attacker could register a camera with a `stream_url` of `http://169.254.169.254/latest/meta-data/` on AWS/GCP and exfiltrate cloud credentials.
+- Is there rate limiting on the Shotpoint auth endpoint? Without it, credential stuffing is trivial.
+
+AREA 3 — VIDEOBYTES PROXY & URL RESOLVER SECURITY (services/videobytes_url.go, services/videobytes_resolver.go, services/videobytes_auth.go)
+Read all three files. Focus on:
+- videobytes_url.go constructs stream URLs. If any URL component comes from the database or request parameters without validation, an attacker who can write camera records could inject an arbitrary URL that ophanim will proxy, turning ophanim into an open proxy.
+- videobytes_auth.go — how are VideoBytesGo credentials managed? Are they per-camera, per-site, or global? If global: compromising any one camera exposes all streams.
+- videobytes_resolver.go — does it cache resolved URLs? If so, what's the cache invalidation strategy? A stale cached URL pointing to a decommissioned stream could cause ophanim to forward auth tokens to a third-party server that has taken over the old IP.
+- Are there any TLS certificate verification bypasses (InsecureSkipVerify: true) in the HTTP clients that talk to VideoBytesGo?
+
+DELIVERABLES:
+- **Retention Safety**: Deletion strategy grade, storm risk, race window assessment.
+- **Shotpoint Auth**: Token security grade (1-10), SSRF surface identification with specific code locations.
+- **VideoBytesGo Proxy**: Open proxy risk, credential scope, cache staleness risk, TLS verification status.
+- **Critical Finding**: Identify the single highest-severity security finding across all three areas and describe the exact exploit path.

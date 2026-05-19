@@ -1,0 +1,22 @@
+PACKAGE AUDIT: VideoBytesGo / codecs (function-by-function)
+
+SCOPE FILES (audit every function in each):
+- codecs/binding.go
+- codecs/Decoder.go
+- codecs/fmp4_demuxer.go
+- codecs/fmp4_muxer.go
+- codecs/fmp4_to_mp4.go
+- codecs/h264Decoder.go
+- codecs/h265Decoder.go
+- codecs/hls_muxer.go
+- codecs/mjpegDecoder.go
+- codecs/mjpeg/mjpeg.go
+- codecs/mjpeg/mjpeg_mem.go
+- codecs/mp4.go
+- codecs/mpegts_muxer.go
+
+FOCUS: MP4/fMP4 mux/demux correctness, buffer copies, timestamp handling, brand/box writes, decoder lifecycle, allocation hot paths, ignored errors.
+
+DELIVERABLES: Follow the marathon preamble (function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes).
+
+Output title: `# VideoBytes codecs — function audit`

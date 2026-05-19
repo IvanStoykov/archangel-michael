@@ -1,0 +1,35 @@
+You are a senior security engineer and Flutter developer. Perform a security audit and client-side code review of "Liminal". Think step-by-step. Read source files with your tools; do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/liminal
+
+YOUR TASK:
+Audit the following three areas.
+
+AREA 1 — GO SERVER SECURITY (server/internal/websocket/handler.go, server/cmd/liminal-server/main.go)
+Read both files. Identify all security and reliability issues:
+
+- `CheckOrigin: func(r *http.Request) bool { return true }` — This disables CORS protection entirely. Any website can initiate a WebSocket connection to this server from a user's browser. For a local dev server this is acceptable, but describe what a production hardening policy should look like (origin whitelist, token-based auth).
+- `session.audioFile.Write(data)` — The return values (n int, err error) are discarded. If the disk is full, writes silently fail and the session "succeeds" with a truncated/corrupted .pcm file. How should this be handled?
+- File naming: `time.Now().Format("2006-01-02_15-04-05") + ".pcm"`. Two sessions starting within the same second get the same filename and the second session overwrites the first. What's the fix?
+- There is no maximum message size set on the upgrader (ReadBufferSize is just the buffer hint, not a limit). A malicious client could send a single enormous binary message, potentially causing an OOM. What's the gorilla/websocket API to enforce a max message size?
+- There is no authentication on the /ws endpoint. Anyone who can reach the server can start a recording session and fill the disk. In a local network or development context, what's the minimal auth pattern that wouldn't break the Flutter client?
+- The final `conn.WriteMessage` after the loop is called without checking whether the connection is still open (the loop exits on error/close). This will log a spurious error. Is it harmful or just noisy?
+
+AREA 2 — FLUTTER CLIENT SECURITY & ROBUSTNESS (client/lib/services/websocket_service.dart, client/lib/services/audio_service.dart)
+Read both files. Focus on:
+- Does the WebSocket service use wss:// (TLS) or ws:// (plaintext)? For a journaling app recording personal thoughts, sending audio over plaintext on any non-localhost network is a significant privacy issue.
+- Is there exponential backoff on WebSocket reconnect, or does it reconnect in a tight loop on connection failure? A tight reconnect loop would drain battery and flood server logs.
+- Does audio_service.dart request the microphone permission before opening the audio stream? If the permission is denied and the stream open is attempted anyway, what's the error handling path?
+- Is there a maximum recording duration enforced on the client, or can a user (or a bug) record indefinitely, filling server disk?
+
+AREA 3 — FLUTTER PROVIDER STATE SAFETY (client/lib/providers/recording_provider.dart)
+Read the file. Focus on:
+- Riverpod providers can be accessed from multiple widgets simultaneously. If the RecordingProvider exposes a mutable AudioService or WebSocketService, can two widgets trigger concurrent start/stop calls that leave the state machine in an inconsistent state (e.g., "recording but socket closed")?
+- When the app goes to background on iOS/Android, audio recording is suspended by the OS. Does the provider handle the app lifecycle events (AppLifecycleState.paused / resumed) to cleanly pause/resume recording and avoid a zombie session on the server?
+- If the provider is disposed while a recording is in progress (e.g., the user force-quits), is the WebSocket closed cleanly, or does the server goroutine hang waiting for a message that will never arrive?
+
+DELIVERABLES:
+- **Server Issues List**: All issues found in Area 1, each with: severity (critical/high/medium/low), one-line description, and the exact fix (code snippet or API name).
+- **Flutter Security**: TLS status, reconnect loop risk, permission handling gaps.
+- **Provider State**: Concurrent mutation risk, lifecycle handling gaps.
+- **Production Readiness Checklist**: A yes/no checklist of 8-10 items this server needs before it can handle real user data.

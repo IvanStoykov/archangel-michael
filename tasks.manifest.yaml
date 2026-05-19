@@ -1,0 +1,75 @@
+# Single source of truth for overnight audit tasks.
+# Parsed by scripts/lib/manifest.sh (no PyYAML required).
+
+tasks:
+  - id: 01_videobytes_fmp4
+    prompt_file: 01_videobytes_fmp4.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 1
+    expected_sections:
+      - "Root Cause"
+      - "Code Trace"
+      - "Proposed Fix"
+
+  - id: 01b_videobytes_buffer_rtsp
+    prompt_file: 01b_videobytes_buffer_rtsp.txt
+    repo_path: /home/ivan/git/VideoBytesGo
+    priority: 2
+    expected_sections:
+      - "Buffer Safety"
+      - "RTSP Reconnect"
+      - "Severity Ranking"
+
+  - id: 02_factoryman_scheduler
+    prompt_file: 02_factoryman_scheduler.txt
+    repo_path: /home/ivan/git/factory-man
+    priority: 3
+    expected_sections:
+      - "Drift Detector"
+      - "Quota Solver"
+      - "Priority Rankings"
+
+  - id: 02b_factoryman_drift_shifts
+    prompt_file: 02b_factoryman_drift_shifts.txt
+    repo_path: /home/ivan/git/factory-man
+    priority: 4
+    expected_sections:
+      - "Drift Detector"
+      - "Shift Assignment"
+      - "Top Fix"
+
+  - id: 03_ophanim_lpr_ingest
+    prompt_file: 03_ophanim_lpr_ingest.txt
+    repo_path: /home/ivan/git/ophanim
+    priority: 5
+    expected_sections:
+      - "LPR Concurrency"
+      - "Edge Ingest"
+      - "Priority Rankings"
+
+  - id: 03b_ophanim_retention_auth
+    prompt_file: 03b_ophanim_retention_auth.txt
+    repo_path: /home/ivan/git/ophanim
+    priority: 6
+    expected_sections:
+      - "Retention Safety"
+      - "Shotpoint Auth"
+      - "Critical Finding"
+
+  - id: 04a_liminal_phase2_architecture
+    prompt_file: 04a_liminal_phase2_architecture.txt
+    repo_path: /home/ivan/git/liminal
+    priority: 7
+    expected_sections:
+      - "Goroutine Architecture"
+      - "VAD Algorithm"
+      - "Message Protocol"
+
+  - id: 04b_liminal_security_flutter
+    prompt_file: 04b_liminal_security_flutter.txt
+    repo_path: /home/ivan/git/liminal
+    priority: 8
+    expected_sections:
+      - "Server Issues"
+      - "Flutter Security"
+      - "Production Readiness"

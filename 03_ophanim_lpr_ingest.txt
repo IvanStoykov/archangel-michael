@@ -1,0 +1,40 @@
+You are a senior Go backend engineer performing a deep-dive code audit of a video surveillance and License Plate Recognition (LPR) system called "ophanim". Read the code carefully with your file tools and think step-by-step. Do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/ophanim
+
+CONTEXT:
+ophanim is a real-time LPR and camera management system. It ingests LPR hit events from edge devices (cameras running VideoBytesGo), aggregates them into deduplicated hit records, manages retention, integrates with a "Shotpoint" auth system, and serves a REST/gRPC API.
+
+YOUR TASK:
+Audit the following four areas and produce a structured report.
+
+AREA 1 — LPR AGGREGATOR & BATCH WRITER CONCURRENCY (services/lpr_aggregator.go, services/lpr_batch_writer.go)
+Read both files entirely. Focus on:
+- `lpr_aggregator.go` contains `LPRResultRow` and aggregation helpers. `lpr_batch_writer.go` likely batches DB writes. Identify any shared mutable state (maps, slices, counters) accessed from multiple goroutines. Are there any unguarded map writes that could cause a concurrent map write panic?
+- The loitering detection (`FindLoiteringPlates`) reads `last_detected - detected_at`. If two goroutines update the same row's `last_detected` concurrently before the dwell check, can loitering be triggered or suppressed incorrectly?
+- Does the batch writer drain its queue before shutdown (on context cancellation), or could buffered hits be lost on restart?
+
+AREA 2 — EDGE INGEST STATE MACHINE (services/edge_ingest_state.go)
+Read the entire file. Focus on:
+- How does edge device state transition when a camera goes offline mid-stream? Is there a heartbeat timeout or does the system only react to explicit disconnect events?
+- If an edge device reconnects while the previous session is still being torn down, can two ingest goroutines run concurrently for the same device, writing duplicate hits?
+- Is there any circuit breaker or backpressure mechanism if the edge device floods hits faster than the DB can write?
+
+AREA 3 — RETENTION POLICY SAFETY (services/retention.go)
+Read the entire file. Focus on:
+- What deletion strategy is used — hard delete, soft delete, or archival? Can retention accidentally delete hits that are referenced by open investigations (wanted plate lists)?
+- Is the retention query bounded (e.g., `LIMIT 1000` per batch) to avoid lock contention on the hits table during a large purge, or does it delete in an unbounded single transaction?
+- If retention runs concurrently with a high-volume ingest, can it delete a row that was just inserted within the same transaction window?
+
+AREA 4 — SHOTPOINT AUTH SECURITY (services/shotpoint_auth.go)
+Read the file. Focus on:
+- How are Shotpoint tokens validated? Is there token expiry checking, or does any valid-looking token get accepted?
+- Is the token stored in plaintext in the database or hashed? What's the attack surface if the ophanim DB is compromised?
+- Are there any SSRF risks in `shotpoint.go` where user-supplied URLs or camera addresses are used in outbound HTTP calls without sanitization?
+
+DELIVERABLES:
+- **Area 1 — LPR Concurrency**: Specific race conditions or panic scenarios, if any.
+- **Area 2 — Edge Ingest**: Reconnect race risk, backpressure assessment.
+- **Area 3 — Retention**: Deletion safety, referential integrity with wanted lists.
+- **Area 4 — Shotpoint Auth**: Token security grade, SSRF surface.
+- **Priority Rankings**: Which area is the highest operational risk and why?

@@ -1,0 +1,45 @@
+You are a senior Go engineer and audio systems architect. Your task is to design the Phase 2 architecture for "Liminal" — a voice journaling app. Read the existing codebase with your file tools, then produce a concrete design document. Think step-by-step. Do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/liminal
+
+CONTEXT:
+Liminal is a mobile voice journaling app. Phase 1 is complete: a Flutter client streams raw PCM audio over WebSocket to a Go server, which saves it to a .pcm file. Phase 2 must add real-time transcription via whisper.cpp Go bindings, and stream partial/final transcript results back to the Flutter client.
+
+The current server is in server/internal/websocket/handler.go. The Flutter client is in client/lib/services/websocket_service.dart and client/lib/services/audio_service.dart.
+
+Read all existing source files before designing.
+
+YOUR TASK: Design the complete Phase 2 implementation.
+
+DESIGN AREA 1 — whisper.cpp GOROUTINE MODEL
+The core tension: whisper.cpp inference is synchronous and CPU-bound (blocking). The WebSocket handler must remain non-blocking to continue receiving audio chunks. Design:
+- Should inference run in the handler goroutine (blocks ingest), a dedicated per-session goroutine, or a shared worker pool?
+- What is the right buffer hand-off mechanism between the ingest goroutine and the inference goroutine? (channel of []byte chunks? a shared ring buffer with mutex? a time-triggered flush?)
+- How do you prevent the inference goroutine from falling behind — i.e., if inference takes 800ms but audio arrives every 500ms, what happens to the backlog?
+
+DESIGN AREA 2 — SLIDING WINDOW BUFFERING & VAD
+whisper.cpp works best on 30-second windows but produces partial results on shorter chunks. Design:
+- Propose a concrete sliding window size and step size for streaming transcription (e.g., 30s window, 10s step). Justify the tradeoff between latency and accuracy for a journaling use case where the speaker talks continuously.
+- Design a simple Voice Activity Detection (VAD) approach that can be done in Go without an ML model — e.g., RMS energy threshold on PCM samples. Define the parameters (window size, silence threshold, min silence duration to trigger a flush).
+- When VAD detects end-of-utterance, should the system run inference immediately on the utterance buffer, or wait for the next window boundary? What are the tradeoffs?
+
+DESIGN AREA 3 — PARTIAL vs FINAL RESULTS PROTOCOL
+Design the WebSocket message protocol for streaming results back to Flutter:
+- Define the JSON message schema for partial results (interim, may change) vs. final results (committed, will not change). Include fields for: text, is_final, segment_start_ms, segment_end_ms, confidence.
+- How does the Flutter client handle partial results displaying in the UI — overwrite the last partial, append, or maintain a cursor position?
+- If the WebSocket connection drops mid-session, how does the reconnect protocol work? Should the server buffer unsent transcripts, or does the client accept loss?
+
+DESIGN AREA 4 — CONCRETE IMPLEMENTATION PLAN
+Produce a phased implementation plan:
+- Phase 2a (1 week): whisper.cpp integration, blocking inference on complete utterances, final-only results
+- Phase 2b (1 week): streaming partial results, sliding window, VAD-triggered flush
+- Phase 2c (1 week): Flutter UI for live transcript display with partial result cursor
+
+For each phase, list: the files to create/modify, the key function signatures, and the acceptance test criterion.
+
+DELIVERABLES:
+- **Goroutine Architecture Diagram** (ASCII): Show the goroutine topology, channels, and data flow.
+- **VAD Algorithm**: Pseudocode for the Go VAD implementation.
+- **Message Protocol**: The exact JSON schemas for partial and final transcript messages.
+- **Implementation Plan**: The three-phase breakdown with file names and function signatures.
+- **Risk Items**: The two or three things most likely to go wrong during implementation.

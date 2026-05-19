@@ -1,0 +1,12 @@
+PACKAGE AUDIT: VideoBytesGo / core bootstrap (function-by-function)
+
+SCOPE FILES (audit every function in each):
+- main.go
+- config/config.go
+- rmq/rmq_manager.go
+
+FOCUS: Startup/shutdown ordering, config validation gaps, default values that cause prod footguns, RMQ connection recovery, goroutine leaks on exit, flag/env handling.
+
+DELIVERABLES: Function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes.
+
+Output title: `# VideoBytes core — function audit`

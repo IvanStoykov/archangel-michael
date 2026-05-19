@@ -1,0 +1,8 @@
+results/*.md
+results/*.attempt*.md
+results/*.tmp.*
+results/.run_audits.lock
+results/_summary.txt
+logs/
+results/.context/
+audit.conf.active

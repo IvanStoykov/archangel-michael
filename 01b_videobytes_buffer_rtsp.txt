@@ -1,0 +1,32 @@
+You are a senior Go video streaming engineer. Perform a deep-dive static analysis of the "VideoBytesGo" codebase. Think step-by-step. Read source files with your tools; do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/VideoBytesGo
+
+CONTEXT:
+VideoBytesGo maintains an internal ring/segment buffer of fMP4 frames ingested from RTSP cameras. When the API serves a clip or live segment, it reads from this buffer. The concern is whether the buffer implementation has races, overflow conditions, or silent data loss under concurrent access — particularly when multiple HTTP clients request the same stream simultaneously.
+
+YOUR TASK:
+Audit the following three areas.
+
+AREA 1 — RING/SEGMENT BUFFER IMPLEMENTATION
+Find the buffer implementation (look in internal/, pkg/, or buffer/ directories — likely named something like segment_buffer.go, ring_buffer.go, or frame_store.go). Analyze:
+- Is the buffer guarded by a mutex or does it use a lock-free channel? If mutex-based, are there any points where the lock is held across a blocking I/O call (file write, network send), which could cause lock starvation for RTSP ingest goroutines?
+- What happens when the buffer is full and a new keyframe arrives? Is the oldest segment evicted, dropped, or does the write block? If it blocks, can the RTSP ingest goroutine deadlock?
+- If a reader (HTTP handler) and the RTSP ingest writer both access the buffer concurrently, can a reader observe a partially-written frame (torn read) — e.g., the frame header written but the payload not yet appended?
+
+AREA 2 — RTSP CLIENT INGEST PIPELINE
+Find the RTSP client implementation (likely rtsp_client.go or ingest/). Analyze:
+- When the RTSP stream disconnects unexpectedly, does the reconnect logic preserve the keyframe index in the buffer, or does it reset and force all current readers to seek to the new keyframe position?
+- Is there a goroutine leak risk if the RTSP client goroutine exits without the HTTP handler goroutines being notified? Could a handler goroutine block forever waiting for a frame that will never arrive?
+- Does the ingest pipeline enforce that the first frame in any new segment is always a keyframe (IDR frame)? If not, clients could receive undecodable video at the start of a stream.
+
+AREA 3 — CONCURRENT GetVideo REQUESTS
+Trace what happens when two HTTP clients call GetVideo for the same stream at the same time:
+- Is the buffer read path safe for concurrent readers? Or does a seek/cursor operation on the buffer mutate shared state that could corrupt both readers' positions?
+- If the fMP4-to-MP4 conversion (from the other audit task) is in-memory and initiated per-request, are two concurrent conversions operating on the same underlying byte slice? Could they race on the input data?
+
+DELIVERABLES:
+- **Buffer Safety**: Is the buffer implementation safe under concurrent RTSP write + N HTTP reads? Identify any specific race or deadlock scenario.
+- **RTSP Reconnect**: What a viewer experiences on camera reconnect — is it graceful or do they get a corrupted segment?
+- **Concurrent Request Race**: Whether two simultaneous GetVideo calls can corrupt each other.
+- **Severity Ranking**: Which of the three areas is most likely to cause a production incident?

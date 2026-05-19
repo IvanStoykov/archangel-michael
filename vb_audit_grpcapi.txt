@@ -1,0 +1,16 @@
+PACKAGE AUDIT: VideoBytesGo / grpcapi (function-by-function)
+
+SCOPE FILES (audit every function in each; skip generated *.pb.go except public RPC handlers that call into them):
+- grpcapi/server.go
+- grpcapi/hub.go
+- grpcapi/convert.go
+- grpcapi/edge_ingest_client.go
+- grpcapi/edge_ingest_client_stats.go
+- grpcapi/lpr.pb.go
+- grpcapi/lpr_grpc.pb.go
+
+FOCUS: gRPC handler safety, stream lifecycle, backpressure, conversion errors, client reconnect logic, stats races, protobuf misuse.
+
+DELIVERABLES: Function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes.
+
+Output title: `# VideoBytes grpcapi — function audit`

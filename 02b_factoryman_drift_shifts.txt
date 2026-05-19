@@ -1,0 +1,48 @@
+You are a senior Go backend engineer. Perform a deep-dive static analysis of the "factory-man" manufacturing scheduling system. Think step-by-step. Read source files with your tools; do not run builds or tests.
+
+CODEBASE ROOT: /home/ivan/git/factory-man
+
+YOUR TASK:
+Audit the following three areas.
+
+AREA 1 — DRIFT DETECTOR CORRECTNESS & CONCURRENCY (internal/service/drift_detector.go)
+Read the entire file carefully. Focus on:
+
+The debounce map access pattern in evalSite:
+1. Lock is acquired: `d.debounceMu.Lock()`
+2. Inner map reference is taken: `driftSince := d.debounce[siteID]`
+3. Lock is RELEASED: `d.debounceMu.Unlock()`
+4. Code iterates and mutates `driftSince` WITHOUT the lock
+5. Lock re-acquired at end to write back
+
+Analyze: Is this safe? The `Start` goroutine uses a blocking ticker so tick() cannot overlap with itself on the same goroutine. But `tick()` calls `evalSite` for each siteID sequentially. Could two different siteIDs share a driftSince map somehow? What happens if a new siteID appears in `siteIDsFn` between the unlock and re-lock? Is the write-back at the end (`d.debounce[siteID] = driftSince`) necessary since driftSince is already a reference to the inner map?
+
+The `d.store.(AlertWriter)` type assertion:
+- This happens inside the inner machine loop (per-machine, per-tick). If the store does NOT implement AlertWriter, drift alerts are silently dropped every tick for every machine. Is there any log line, metric, or startup check that would tell an operator this is happening? Trace whether the in-memory store or postgres store implements AlertWriter.
+
+evalQuotaAtRisk threshold hardcoding:
+- The 0.92 ratio threshold and 24-hour window are hardcoded. Are these the right defaults for all sites? Could a site with a 1-hour production cycle never trigger quota_at_risk because the window is too wide?
+
+AREA 2 — SHIFT ASSIGNMENT ALGORITHM (internal/service/shift_assignment.go)
+Read the entire GenerateAssignments function and all helper functions. Focus on:
+
+Floater count formula:
+- `loproHeadcount <= 15 → 1 floater`, `<= 21 → 2 floaters`. These thresholds are hardcoded. The comment says "LoPro group." Are these numbers specific to one customer's floor layout? Is there any configuration or override mechanism, or would a new site with different group sizes silently get wrong floater counts?
+
+Chain-swap repair loop:
+- Find the repair logic after the initial greedy assignment. Does it have a maximum iteration count? If the constraint graph has no valid chain-swap that satisfies all requirements, could the loop run indefinitely (infinite loop) or terminate gracefully?
+
+Unconstrained workers:
+- Workers are filtered to "active, not absent" but there's no check for whether a worker is already scheduled in an overlapping shift. If a worker appears in two overlapping shift runs' assignment calls simultaneously (due to a schedule overlap bug), can they be double-assigned?
+
+AREA 3 — STORE INTERFACE BOUNDARY (internal/store/)
+Read store.go and postgres.go. Focus on:
+- Does any store method call ValidateTransition (from domain/state_machine.go) before writing a worker or machine state update to the database? Or is state machine validation only at the HTTP handler layer, leaving internal service code free to write illegal transitions?
+- In the postgres store, are state update queries done with optimistic locking (e.g., `WHERE state = $current_state`) so a concurrent update can't silently overwrite a newer state? Or is it a blind UPDATE that races with concurrent API calls?
+- The workorder_dedupe.go file — what deduplication strategy is used? Can a retried import produce phantom work orders that inflate production counts?
+
+DELIVERABLES:
+- **Drift Detector**: Is the debounce unlock-before-iterate safe or a real race? Is silent AlertWriter drop observable?
+- **Shift Assignment**: Floater hardcoding risk, repair loop safety, double-assignment risk.
+- **Store Boundary**: State machine enforcement grade (boundary vs. leaky), optimistic vs. blind locking.
+- **Top Fix**: One concrete code change that would give the most safety improvement.

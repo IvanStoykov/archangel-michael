@@ -1,0 +1,25 @@
+PACKAGE AUDIT: VideoBytesGo / drivers (function-by-function)
+
+SCOPE FILES (audit every function in each):
+- drivers/driver.go
+- drivers/CameraService.go
+- drivers/rtsp/rtsp.go
+- drivers/rtsp_client/rtsp_client.go
+- drivers/rtsp_client/rtsp_session_wrapper.go
+- drivers/rtsp_client/bitreader.go
+- drivers/rtsp_old/rtsp_old.go
+- drivers/onvif/onvif.go
+- drivers/onvif/discovery.go
+- drivers/axis/axis.go
+- drivers/avigilon/avigilon.go
+- drivers/awiros/awiros-uvip.go
+- drivers/dynacolor/dynacolor.go
+- drivers/imageurl/imageurl.go
+- drivers/mjpeg_client/mjpeg_client.go
+- drivers/verkada/verkada.go
+
+FOCUS: RTSP/session lifecycle, reconnect storms, goroutine leaks, blocking I/O, buffer bounds, auth/token handling, driver interface contracts, error propagation to callers.
+
+DELIVERABLES: Function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes.
+
+Output title: `# VideoBytes drivers — function audit`

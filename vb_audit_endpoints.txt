@@ -1,0 +1,18 @@
+PACKAGE AUDIT: VideoBytesGo / endpoints (function-by-function)
+
+SCOPE FILES (audit every function in each):
+- endpoints/endpoints.go
+- endpoints/ginServer.go
+- endpoints/sources.go
+- endpoints/request_queue.go
+- endpoints/memory.go
+- endpoints/benchmarks.go
+- endpoints/benchmark_all.go
+- endpoints/benchmark_avigilon.go
+- endpoints/benchmark_capability.go
+
+FOCUS: HTTP handlers, video/mp4 code paths, queue backpressure, memory accounting, auth middleware gaps, panic recovery, silent error responses, benchmark-only dead paths affecting prod.
+
+DELIVERABLES: Function table + Executive Summary + Critical & High + Performance + Concurrency + Error handling + Suggested fixes.
+
+Output title: `# VideoBytes endpoints — function audit`
