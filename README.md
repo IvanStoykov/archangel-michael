@@ -1,174 +1,72 @@
-# Hermes overnight code audits (atomic-llama-cpp)
+# archangel-michael
 
-Sequential static audits using **atomic-llama-cpp-turboquant** `llama-server` + Hermes file tools.
+> *"Now war arose in heaven, Michael and his angels fighting against the dragon... but he was defeated, and there was no longer any place for them in heaven." — Revelation 12:7-8*
 
-**Ollama is not used** for audits (broken tool calling on Gemma).
+Biblically, Archangel Michael is the leader of the heavenly host, chief of the angels, and protector against spiritual warfare. In a landscape where agentic tools are increasingly adopting names like Hermes—associated by some with idolatry, trickery, or deception—this orchestrator is designed as his digital incarnation: firmly on the side of the Holy Trinity. It ensures that whatever sub-agents operate underneath it are absolutely contained, heavily policed, and granted zero unchecked autonomy. The orchestrator is stronger, ensuring the system remains a secure, obedient tool.
 
-## Quick start
+`archangel-michael`'s purpose is to act as the ultimate authority, orchestrating and supervising a local Large Language Model (like Qwen 3.6 27B or Gemma 4) running on your PC, and leading the 'heavenly host' to victory. 
 
-```bash
-cd /home/ivan/git/archangel-michael
+---
 
-# Optional: tune VRAM for your GPU
-./start_llama.sh --fit          # prints llama-fit-params or manual defaults
+## 🎯 The Core Vision: Slow, Meticulous, and Recursive
 
-# Terminal 1 — start server (wait for "API ready", ~1–3 min load)
-./start_llama.sh
+This project operates on a deeply optimistic, structural trajectory. Instead of demanding instant, frontier-level intelligence to generate a "one-shot brilliant solution," `archangel-michael` trades speed for absolute meticulousness.
 
-# Terminal 2
-./scripts/apply_profile.sh llama-qwen-27b-stable
-./scripts/smoke_test.sh --profile llama-qwen-27b-stable
-./run_audits.sh --profile llama-qwen-27b-stable --task 1
-./run_audits.sh --profile llama-qwen-27b-stable
+Running a local model at a slow 3 tokens-per-second, the pipeline is designed to act as a tireless, localized inspector:
+
+1. **Function-by-Function Scanning:** The orchestrator systematically feeds the local model individual slices of the Go backend, Flutter frontend, and YugabyteDB/PostgreSQL database.
+2. **Find & Document:** The model looks for technical debt, logical flaws, and edge cases, strictly documenting them in a standardized schema.
+3. **Recursive Decomposition:** Big architectural problems are recursively broken down into micro-tasks small enough for a 30B model to flawlessly digest.
+4. **Probing & Testing:** The pipeline allows the local model to write and execute software tests, probe backend APIs, and verify UI components in an isolated sandbox, documenting failures to feed back into the loop.
+5. **Implementation:** Once a task is small enough, the model begins implementing the desired optimizations and changes, staging them for manual review.
+
+---
+
+## ⚖️ The Asymmetric Advantage
+
+Frontier models (Claude, Gemini) are brilliant at zero-shot, holistic architecture. Local 20B–30B models (like Qwen 3.6 27B or Gemma 4) are not. However, local models possess a distinct **asymmetric advantage**: when constrained to highly specific, single-function contexts, they are exceptional at syntax optimizations, strict JSON adherence, and isolated refactoring.
+
+We exploit this advantage by using:
+
+- **Deterministic Scripting:** The Go orchestrator handles all state management, AST parsing, and file routing, entirely removing the burden of context-management from the local model.
+- **Frontier Supervision:** Cloud models (Claude, Gemini, Cursor) are utilized exclusively by the human developer to aid, guide, and supervise the creation of the `archangel-michael` pipeline, writing the deterministic scripts that overcome the local model's blind spots.
+
+---
+
+## 🏗️ Pipeline Architecture
+
+The orchestrator is built natively in **Go**, leveraging static analysis to slice repositories into micro-contexts.
+
+- **The Go Backend Slicer:** Uses native `go/parser` and `go/ast` to dissect Go source code, isolating individual functions and their specific dependencies before feeding them to the local model.
+- **The Flutter Frontend Inspector:** Leverages the Dart `analyzer` API to map out UI widgets and state logic, passing clean architectural JSON to the LLM instead of raw files.
+- **The DB Sandbox Engine:** Utilizes ephemeral Docker instances of YugabyteDB/PostgreSQL to run schema migrations and test queries safely, preventing the model from corrupting local states.
+
+---
+
+## 📜 The Gatekeeper Protocol
+
+To maintain absolute authority, the core state machine operates via a strict interception loop:
+
+1. **Zero Autonomy:** Subordinate models cannot execute terminal commands, modify files, or query databases directly.
+2. **The Interception Queue:** All proposed modifications, test executions, and API probes generated by the local model are rendered as standard unified diffs or commands.
+3. **Human Veto:** These tasks are staged in an inspection queue, waiting on the local dashboard for the human operator to manually verify, approve, or reject.~
+
+```mermaid
+flowchart TD
+  A([Human Gatekeeper<br/>(Final Approval Queue)]) 
+  B(archangel-michael<br/>(State Machine & Guardrails))
+  C1("Go Backend<br/>Pipeline")
+  C2("Flutter Pipeline")
+  D([Local LLM Worker<br/>(Ollama: Qwen / Gemma)])
+
+  A -- "Approve / Reject" --> B
+  B -- "AST & Static Analysis Slicers" --> C1
+  B -- "AST & Static Analysis Slicers" --> C2
+  C1 --> D
+  C2 --> D
+  B -- "Staged Tasks" --> A
 ```
 
-All-in-one: `./run_with_llama.sh --task 1`
 
-## Stable server (RTX 4070 12 GB)
 
-| Setting | Default | Notes |
-|---------|---------|--------|
-| Model | `Qwen3.6-27B-Q4_K_M.gguf` | `/home/ivan/models/Qwen3.6-27B-MTP/` |
-| **KV_CACHE** | **f16** | Use **q8_0** profile if runtime OOM |
-| **CTX** | **32768** | Never **131072**; 8192 too small for Hermes tools |
-| **NGL** | **14** | Partial GPU; OOM → `NGL=10` or `8` |
-| **--fit** | **on** | Auto-tune ctx/layers to free VRAM (`FIT_TARGET=1536` MiB headroom) |
-| Port | **8080** | |
-
-Script: [`scripts/atomic-serve-qwen27-stable.sh`](scripts/atomic-serve-qwen27-stable.sh)  
-NextN: [`scripts/atomic-serve-qwen27-nextn.sh`](scripts/atomic-serve-qwen27-nextn.sh) · profile `llama-qwen-27b-stable-nextn`
-
-Hermes: `model.context_length=65536` (Agent minimum 64K; server `CTX=32768` is the real cap — Hermes steps down on `exceed_context_size` errors), `compression.enabled=false`.
-
-### Decode benchmark (baseline vs NextN)
-
-```bash
-./scripts/bench_decode.sh              # restarts server twice; ~10–15 min on 4070
-NGL=14 CTX=8192 ./scripts/bench_decode.sh
-./start_llama.sh llama-qwen-27b-stable-nextn   # use NextN for audits if bench wins
-./run_audits.sh --profile llama-qwen-27b-stable-nextn --task 1
-```
-
-## Profiles (27B atomic — port **8080**)
-
-| Profile | KV | CTX | Use |
-|---------|----|-----|-----|
-| **`llama-qwen-27b-stable`** | f16 | 32768 | **Default 27B audits** |
-| `llama-qwen-27b-stable-nextn` | f16 | 32768 | 27B + atomic NextN (~7 tok/s decode on partial GPU) |
-| `llama-qwen-27b-q8` | q8_0 | 32768 | If f16 OOMs during long agent runs |
-| `llama-qwen-27b-turbo3-lab` | turbo3 | 8192 max | Speed experiments only — not audits |
-| `llama-gemma-26b` | f16 | 8192 | Needs Gemma GGUF on disk |
-
-## Profile: 35B MoE + draft-mtp (port **8001**, separate stack)
-
-Uses **upstream** [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) `--spec-type draft-mtp`. Does **not** replace or stop 27B profiles on 8080.
-
-**Tutorial (why a bigger model got ~10× faster):** [docs/tutorials/10x-speed-with-a-bigger-model.md](docs/tutorials/10x-speed-with-a-bigger-model.md)
-
-Unsloth MTP guide (sampling, draft depth, Ollama warning): [docs/guides/qwen36-unsloth-mtp.md](docs/guides/qwen36-unsloth-mtp.md) · [Unsloth docs](https://unsloth.ai/docs/models/qwen3.6#mtp-guide)
-
-```bash
-# One-time
-./scripts/setup-upstream-llama-mtp.sh
-./scripts/download-qwen35-mtp-gguf.sh    # ~22GB Q4_K_XL
-./scripts/preflight-qwen35-mtp.sh
-
-# Server (port 8001)
-./start_llama.sh llama-qwen-35b-mtp
-
-# Bench / audits
-./scripts/bench_decode_35b.sh
-./run_audits.sh --profile llama-qwen-35b-mtp --task 1
-```
-
-| Profile | Port | HF repo | GGUF |
-|---------|------|---------|------|
-| **`llama-qwen-35b-mtp`** | 8001 | [havenoammo](https://huggingface.co/havenoammo/Qwen3.6-35B-A3B-MTP-GGUF) | `Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL.gguf` |
-| `llama-qwen-35b-mtp-unsloth` | 8001 | [unsloth](https://huggingface.co/unsloth/Qwen3.6-35B-A3B-MTP-GGUF) | `Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf` |
-
-OOM at load: `FIT_TARGET=2048 ./start_llama.sh llama-qwen-35b-mtp` or use `MAIN_GGUF_ALT` (Q3_K_XL) in the profile.
-
-35B audits use **`SERVER_CTX=131072` (128K)** + `compression.enabled=true` (threshold 0.85). Prompt cache is off (`CACHE_RAM=0`) to reduce OOM. If load fails: `CTX=98304 ./start_llama.sh llama-qwen-35b-mtp` or Q3 quant.
-
-### VideoBytes function marathon (all night)
-
-Seven package-level audits (~62 Go files), each report is function-by-function tables + findings:
-
-```bash
-./start_llama.sh llama-qwen-35b-mtp          # keep running
-./scripts/run_videobytes_marathon.sh --dry-run
-./scripts/run_videobytes_marathon.sh --continue-on-error   # tmux-friendly
-```
-
-Outputs: `results/vb_audit_{core,codecs,drivers,endpoints,utils,grpcapi,vms}.md`
-
-Deprecated: `ollama-*`, `vllm-*`.
-
-## Tuning ladder (OOM or crash)
-
-```bash
-pkill ollama   # free VRAM if needed
-
-# 1) See what fits (build fit-params once)
-cd ~/git/atomic-llama-cpp-turboquant
-cmake --build build --target llama-fit-params
-~/git/archangel-michael/scripts/llama-fit-qwen27.sh
-
-# 2) Lower GPU layers
-NGL=10 ./start_llama.sh
-
-# 3) Smaller KV cache (less VRAM, small quality tradeoff)
-./start_llama.sh llama-qwen-27b-q8
-
-# 4) Smaller context
-CTX=16384 ./start_llama.sh
-
-# 5) Lab only — turbo3, never above 16K ctx
-./start_llama.sh llama-qwen-27b-turbo3-lab
-```
-
-**Never:** `CTX=131072` + `turbo3` (CUDA crash on this card).
-
-## Environment variables (passed to serve script)
-
-| Var | Default | Purpose |
-|-----|---------|---------|
-| `NGL` | 14 | GPU layers |
-| `CTX` | 32768 | Server context |
-| `KV_CACHE` | f16 | `f16`, `q8_0`, or `turbo3` |
-| `LLAMA_FIT` | on | Built-in `--fit` auto memory tuning |
-| `FIT_TARGET` | 1536 | MiB VRAM headroom for `--fit` |
-| `NO_WARMUP` | 0 | Set `1` for faster first API ready |
-
-## tmux
-
-```bash
-tmux new -s audits
-./run_with_llama.sh
-# Ctrl+B, D
-```
-
-## Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| cudaMalloc OOM at load | `NGL=10 ./start_llama.sh` or `pkill ollama` |
-| OOM during audit | `llama-qwen-27b-q8` profile |
-| `below the minimum 64,000 required by Hermes` | Re-run `./scripts/apply_profile.sh llama-qwen-27b-stable-nextn` (config must be **≥65536**, not 30720) |
-| `exceed_context_size` / audit stalls mid-task | Server `CTX=32768`; Hermes will step down after 400. Re-apply profile; avoid huge tool dumps in one turn |
-| Short partial output, fake `<search_files>` XML | Old **Ollama/Gemma** run — use `llama-qwen-27b-stable`, not `ollama-*` |
-| Low decode tok/s (~2–4) | Partial GPU (`NGL=14`); try `NGL=20` or `./scripts/bench_decode.sh` for NextN |
-| NextN never starts / 300s wait | `verify-qwen36-nextn-gguf.py` needs **numpy** — use `VERIFY_NEXTN_GGUF=0` (default in bench) or `pip install numpy` |
-| NextN OOM on start | Lower `CTX`, `NGL=10`, or `llama-qwen-27b-q8` profile |
-| Hermes compression timeout (6+ min) | Same context mismatch; fix profile then restart audit |
-| CUDA crash | Drop turbo3 / 131K ctx; use stable profile |
-| Stale lock | `rm -f results/.run_audits.lock` |
-
-**Stop server:** `./start_llama.sh --stop`
-
-## Files
-
-- `results/*.md` — valid outputs
-- `results/*.partial.md` — failed attempt captures
-- `logs/backend.log` — llama-server
-- `logs/run.jsonl` — audit events
+*Diagram: Human operator holds final approval over `archangel-michael`, which orchestrates slicing and static analysis for Go and Flutter code, feeding isolated contexts to a local LLM worker for task execution. All changes must loop back to human approval before action.*
