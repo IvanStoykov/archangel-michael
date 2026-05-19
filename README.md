@@ -7,7 +7,7 @@ Sequential static audits using **atomic-llama-cpp-turboquant** `llama-server` + 
 ## Quick start
 
 ```bash
-cd /home/ivan/git/hermes-overnight-audits
+cd /home/ivan/git/archangel-michael
 
 # Optional: tune VRAM for your GPU
 ./start_llama.sh --fit          # prints llama-fit-params or manual defaults
@@ -63,6 +63,8 @@ NGL=14 CTX=8192 ./scripts/bench_decode.sh
 
 Uses **upstream** [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) `--spec-type draft-mtp`. Does **not** replace or stop 27B profiles on 8080.
 
+**Tutorial (why a bigger model got ~10× faster):** [docs/tutorials/10x-speed-with-a-bigger-model.md](docs/tutorials/10x-speed-with-a-bigger-model.md)
+
 Unsloth MTP guide (sampling, draft depth, Ollama warning): [docs/guides/qwen36-unsloth-mtp.md](docs/guides/qwen36-unsloth-mtp.md) · [Unsloth docs](https://unsloth.ai/docs/models/qwen3.6#mtp-guide)
 
 ```bash
@@ -110,7 +112,7 @@ pkill ollama   # free VRAM if needed
 # 1) See what fits (build fit-params once)
 cd ~/git/atomic-llama-cpp-turboquant
 cmake --build build --target llama-fit-params
-~/git/hermes-overnight-audits/scripts/llama-fit-qwen27.sh
+~/git/archangel-michael/scripts/llama-fit-qwen27.sh
 
 # 2) Lower GPU layers
 NGL=10 ./start_llama.sh

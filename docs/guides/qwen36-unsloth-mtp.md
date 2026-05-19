@@ -8,6 +8,8 @@ Sources:
 
 This repo keeps **27B on port 8080** (atomic) and **35B MTP on port 8001** (upstream `draft-mtp`) as separate profiles.
 
+**Narrative tutorial (~10× speed, bigger model):** [../tutorials/10x-speed-with-a-bigger-model.md](../tutorials/10x-speed-with-a-bigger-model.md)
+
 ## What MTP is
 
 Multi-Token Prediction: the model drafts several future tokens, then the main model verifies them in one pass. llama.cpp flag (May 2026+):
