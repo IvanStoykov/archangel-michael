@@ -1,0 +1,73 @@
+# Curated LLM Inference Profiles for RTX 4070 (12GB VRAM) & Intel Core i7-13700KF
+
+profiles:
+  - id: "qwen3.6-35b-mtp"
+    name: "Qwen 3.6 35B-A3B MoE (MTP spec)"
+    description: "Highly optimized 35B mixture-of-experts model using spec-type draft-mtp for 12GB VRAM."
+    model_path: "models/qwen3.6-35b-mtp.gguf"
+    parameters:
+      temperature: 0.20
+      top_p: 0.90
+      top_k: 40
+      parallel_tool_calls: true
+      ctk: "q8_0"
+      ctv: "q4_0"
+      spec_type: "draft-mtp"
+      spec_draft_n_max: 2
+      spec_draft_p_min: 0.75
+      ctx_checkpoints: 4
+      swa_full: true
+      fit: true
+      fit_ctx: 16384
+      fit_target: 1536
+      threads: 8
+      core_affinity: "0-15"
+      no_mmap: true
+      no_mmproj_offload: true
+      tool_call_parser: "qwen3_xml"
+      port: 8081
+
+  - id: "gemma-4-31b"
+    name: "Gemma 4 31B Dense"
+    description: "Dense 31B parameter coder model leveraging native Sliding Window Attention."
+    model_path: "models/gemma4-31b.gguf"
+    parameters:
+      temperature: 0.25
+      top_p: 0.85
+      top_k: 45
+      parallel_tool_calls: true
+      ctk: "q8_0"
+      ctv: "q4_0"
+      spec_type: "none"
+      ctx_checkpoints: 4
+      swa_full: true
+      fit: true
+      fit_ctx: 16384
+      fit_target: 1536
+      threads: 8
+      core_affinity: "0-15"
+      no_mmap: true
+      no_mmproj_offload: true
+      port: 8081
+
+  - id: "qwen2.5-coder-32b"
+    name: "Qwen 2.5 Coder 32B Instruct"
+    description: "Standard dense instruction-tuned coder model."
+    model_path: "models/qwen2.5-coder-32b-instruct.gguf"
+    parameters:
+      temperature: 0.20
+      top_p: 0.90
+      top_k: 40
+      parallel_tool_calls: true
+      ctk: "q8_0"
+      ctv: "q4_0"
+      spec_type: "none"
+      ctx_checkpoints: 8
+      fit: true
+      fit_ctx: 8192
+      fit_target: 1536
+      threads: 8
+      core_affinity: "0-15"
+      no_mmap: true
+      no_mmproj_offload: true
+      port: 8081

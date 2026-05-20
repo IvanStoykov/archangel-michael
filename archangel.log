@@ -1,0 +1,30 @@
+{"level":"info","time":"2026-05-20T05:34:45-04:00","message":"=================================================="}
+{"level":"info","time":"2026-05-20T05:34:45-04:00","message":"       Archangel Orchestration Daemon Booted       "}
+{"level":"info","time":"2026-05-20T05:34:45-04:00","message":"=================================================="}
+{"level":"info","config_file":"archangel.yml","time":"2026-05-20T05:34:45-04:00","message":"Loaded configuration file successfully."}
+{"level":"info","port":8080,"log_level":"info","time":"2026-05-20T05:34:45-04:00","message":"Server configurations loaded."}
+{"level":"info","provider":"custom","model":"qwen3.6-35b-mtp","temperature":0.2,"parallel_tool_calls":true,"time":"2026-05-20T05:34:45-04:00","message":"LLM parameters seeded."}
+{"level":"info","spec_type":"draft-mtp","spec_draft_n_max":2,"spec_draft_p_min":0.75,"ctx_checkpoints":4,"time":"2026-05-20T05:34:45-04:00","message":"Speculative decoding (MTP) profiles resolved."}
+{"level":"info","api_url":"http://ollama:11434/api/tags","is_local":true,"time":"2026-05-20T05:34:45-04:00","message":"Endpoint geolocation check completed."}
+{"level":"warn","time":"2026-05-20T05:34:45-04:00","message":"Local endpoint detected. Prefill stale watchdog (180s timeout) has been disabled to prevent prefill infinite loops."}
+{"level":"info","context_32K_threshold":22937,"context_64K_threshold":44800,"time":"2026-05-20T05:34:45-04:00","message":"Context compressor parameters compiled."}
+{"level":"info","time":"2026-05-20T05:34:45-04:00","message":"Embedded static frontend assets validated successfully."}
+{"level":"info","time":"2026-05-20T05:34:45-04:00","message":"Initializing agent runtime safety simulation..."}
+{"level":"info","step":1,"extracted_instruction":"{\"tool\": \"read_file\", \"path\": \"go.mod\"}","time":"2026-05-20T05:34:45-04:00","message":"Agent loop parsing verified."}
+{"level":"warn","tool":"read_file","args":"config/config.go","time":"2026-05-20T05:34:45-04:00","message":"[Doom-Loop Detected] Identical tool call repetition detected. Pausing and injecting warning reminder."}
+{"level":"info","time":"2026-05-20T05:45:35-04:00","message":"=================================================="}
+{"level":"info","time":"2026-05-20T05:45:35-04:00","message":"       Archangel Orchestration Daemon Booted       "}
+{"level":"info","time":"2026-05-20T05:45:35-04:00","message":"=================================================="}
+{"level":"info","config_file":"archangel.yml","time":"2026-05-20T05:45:35-04:00","message":"Loaded configuration file successfully."}
+{"level":"info","models_file":"models.yml","loaded_profiles":3,"time":"2026-05-20T05:45:35-04:00","message":"Loaded curated model profiles successfully."}
+{"level":"info","api_url":"http://ollama:11434/api/tags","is_local":true,"time":"2026-05-20T05:45:35-04:00","message":"Endpoint geolocation check completed."}
+{"level":"warn","time":"2026-05-20T05:45:35-04:00","message":"Local endpoint detected. Prefill stale watchdog (180s timeout) has been disabled to prevent prefill infinite loops."}
+{"level":"info","context_32K_threshold":22937,"context_64K_threshold":44800,"time":"2026-05-20T05:45:35-04:00","message":"Context compressor parameters compiled."}
+{"level":"info","time":"2026-05-20T05:45:35-04:00","message":"Embedded static frontend assets validated successfully."}
+{"level":"info","time":"2026-05-20T05:45:35-04:00","message":"Initializing agent runtime safety simulation..."}
+{"level":"info","grpc_port":8081,"time":"2026-05-20T05:45:35-04:00","message":"Starting gRPC Logging Server..."}
+{"level":"info","step":1,"extracted_instruction":"{\"tool\": \"read_file\", \"path\": \"go.mod\"}","time":"2026-05-20T05:45:35-04:00","message":"Agent loop parsing verified."}
+{"level":"info","http_port":8080,"time":"2026-05-20T05:45:35-04:00","message":"Starting HTTP Gin Server..."}
+{"level":"warn","tool":"read_file","args":"config/config.go","time":"2026-05-20T05:45:35-04:00","message":"[Doom-Loop Detected] Identical tool call repetition detected. Pausing and injecting warning reminder."}
+{"level":"info","profile":"qwen3.6-35b-mtp","name":"Qwen 3.6 35B-A3B MoE (MTP spec)","path":"models/qwen3.6-35b-mtp.gguf","time":"2026-05-20T05:46:10-04:00","message":"Mock GGUF local model launcher invoked."}
+{"level":"info","taskset_cores":"0-15","threads":0,"time":"2026-05-20T05:46:10-04:00","message":"[Hardware Optimization] Serving engine executing pinned to Performance Cores."}

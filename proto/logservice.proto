@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "archangel/proto";
+
+service LogService {
+    rpc StreamLogs (LogRequest) returns (stream LogLine);
+}
+
+message LogRequest {
+    string min_level = 1;
+}
+
+message LogLine {
+    int64 timestamp = 1;
+    string level = 2;
+    string message = 3;
+    string payload_json = 4;
+}

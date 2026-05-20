@@ -1,0 +1,59 @@
+# Archangel Daemon Configuration
+
+server:
+  port: 8080
+  log_file: "archangel.log"
+  log_to_stdout: true
+  json_logs: false
+  log_level: "info"
+
+model:
+  default_provider: "custom"
+  default_model: "qwen3.6-35b-mtp"
+  api_health_url: "http://ollama:11434/api/tags"
+  local_endpoints:
+    - "ollama"
+    - "hermes-litellm"
+    - "localhost"
+    - "127.0.0.1"
+  
+  # Hyperparameters for tool-calling stability
+  temperature: 0.20
+  top_p: 0.90
+  top_k: 40
+  parallel_tool_calls: true
+  api_max_retries: 1
+
+  # Speculative Decoding & Multi-Token Prediction (MTP)
+  spec_type: "draft-mtp"
+  spec_draft_n_max: 2
+  spec_draft_p_min: 0.75
+  ctx_checkpoints: 4  # Keep low to prevent RAM exhaustion (don't use 32)
+  cache_reuse: 256
+  swa_full: true
+
+agent:
+  max_iterations: 90           # Caution warning injected at 75, Warning at 85
+  max_auto_continues: 3
+  preserve_thinking: true      # Preserves assistant <think> block in API history
+  preserve_env_refs: true      # Prevents env variables from being overwritten on disk save
+
+context:
+  engine: "compressor"
+  compression:
+    enabled: true
+    threshold: 0.70            # Target compression threshold (e.g., at 70% window)
+    target_ratio: 0.20         # Compress down to 20% of window
+    protect_last_n: 20         # Guard last N messages from compression
+    hygiene_hard_message_limit: 400
+
+doom_loop:
+  tool_history_window: 3       # Buffer size to detect identical tool calls
+  ast_similarity_limit: 0.90   # AST edit similarity threshold
+  max_compile_failures: 3      # Max consecutive compile failures before rollback
+  hard_iteration_limit: 5      # Hard loop count limit before human-in-the-loop
+
+timeouts:
+  task_timeout_sec: 3600
+  terminal_timeout_sec: 600
+  stale_timeout_sec: 600       # Prefill watchdog stale timeout (disabled for local endpoints)
